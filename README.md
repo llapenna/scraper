@@ -14,7 +14,6 @@ For each of the assets on [trustwallet assets](https://github.com/trustwallet/as
     symbol, 
     name, 
     network, 
-    price, 
     trustwallet_id, 
     coinmarketcap_id, 
     coingecko_id, 
