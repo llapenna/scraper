@@ -8,7 +8,7 @@ This will test your knowledge of
 - HTTP (via axios)
 - Git (basic knowledge)
 
-For each of the assets on [trustwallet assets](https://github.com/trustwallet/assets, the goal is to output a CSV that includes the following fields:
+For each of the assets on [trustwallet assets](https://github.com/trustwallet/assets), the goal is to output a CSV that includes the following fields:
 
 ```
     symbol, 
