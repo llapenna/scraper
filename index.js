@@ -3,6 +3,8 @@ const axios = require('axios').default;
 const fs = require('fs');
 const simpleGit = require('simple-git');
 
+const { createCSV, writeCSV, formatCryptoObject } = require('./utils/helper')
+
 const sampleAsset = {
   // you can fetch this via the filesystem on /blockchains/bitcoin/info.json
   // https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/bitcoin/info/info.json 
@@ -56,6 +58,60 @@ async function main() {
         console.log(`cloned trustwallet assets: ${fs.existsSync(__dirname + '/assets')}`);
     }
 
+    if (!fs.existsSync(__dirname + '/results')) {
+      fs.rmdirSync(__dirname + '/results', { recursive: true })
+      fs.mkdirSync(__dirname + '/results')
+    }
+      
+
+    // we get the list of blockchains
+    const blockchainsPath = `${process.cwd()}/assets/blockchains`
+
+    for (let element of fs.readdirSync(blockchainsPath)) {
+      // we read the info file
+      const raw = fs.readFileSync(`${blockchainsPath}/${element}/info/info.json`)
+      const info = JSON.parse(raw)
+
+      const crypto = await formatCryptoObject({
+        symbol: info.symbol,
+        name: info.name,
+        network: element, // the coin is the native asset
+        trustwallet_id: element,
+        contract_address: null // the coin isn't a token
+      })
+
+      writeCSV({
+        path: `\\${element}`,
+        csv: createCSV(crypto)
+      })
+
+      // get the tokens if any
+      if (fs.existsSync(`${blockchainsPath}/${element}/tokenlist.json`)) {
+        console.log('Has tokens')
+        const raw = fs.readFileSync(`${blockchainsPath}/${element}/tokenlist.json`)
+
+        for (let token of JSON.parse(raw).tokens) {
+
+          // this means we are facing a native coin of the network
+          if (token.type === 'coin')
+            continue
+
+          const formattedToken = await formatCryptoObject({
+            symbol: token.symbol,
+            name: token.name,
+            network: element,
+            trustwallet_id: token.address, // navigating through the assets folder, we find that the address corresponds with the folder name
+            contract_address: token.address
+          })
+
+          writeCSV({
+            path: `\\${element}\\${token.address}`, // we match the trustwallet format, it can be changed to user's preferences
+            csv: createCSV(formattedToken)
+          })
+        }
+      }
+    }
+    
 
     // example on using 'fetch' to get API details
     const bitcoinInfo = await axios.get('https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/bitcoin/info/info.json')
